@@ -15,14 +15,16 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../swift-foundations/swift-ascii"),
-        .package(path: "../swift-rfc-1123")
+        .package(path: "../swift-rfc-1123"),
+        .package(path: "../../swift-primitives/swift-parser-primitives")
     ],
     targets: [
         .target(
             name: "RFC 5321",
             dependencies: [
                 .product(name: "RFC 1123", package: "swift-rfc-1123"),
-                .product(name: "ASCII", package: "swift-ascii")
+                .product(name: "ASCII", package: "swift-ascii"),
+                .product(name: "Parser Primitives", package: "swift-parser-primitives")
     ]
         ),
         .testTarget(
