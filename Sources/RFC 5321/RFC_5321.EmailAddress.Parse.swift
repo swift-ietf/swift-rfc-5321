@@ -47,7 +47,6 @@ extension RFC_5321.EmailAddress.Parse {
 }
 
 extension RFC_5321.EmailAddress.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Output
     public typealias Failure = RFC_5321.EmailAddress.Parse<Input>.Error
 
     @inlinable
