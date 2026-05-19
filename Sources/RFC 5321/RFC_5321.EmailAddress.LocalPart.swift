@@ -29,7 +29,7 @@ extension RFC_5321.EmailAddress {
     /// ```
     public struct LocalPart: Hashable, Sendable, Codable {
         /// Canonical byte storage (ASCII-only per RFC 5321)
-        let _value: [UInt8]
+        let _value: [Byte]
 
         /// The storage format (dot-atom or quoted)
         private let format: Format
@@ -51,7 +51,7 @@ extension RFC_5321.EmailAddress {
         /// - Pre-validated values
         /// - Internal construction after validation
         init(__unchecked: Void, rawValue: String) {
-            self._value = [UInt8](utf8: rawValue)
+            self._value = Array<Byte>(rawValue.utf8)
             // Infer format from presence of quotes
             if rawValue.hasPrefix("\"") && rawValue.hasSuffix("\"") {
                 self.format = .quoted
@@ -64,7 +64,7 @@ extension RFC_5321.EmailAddress {
         ///
         /// This is a convenience initializer that converts String to bytes.
         public init(_ string: some StringProtocol) throws(Error) {
-            try self.init(ascii: Array(string.utf8))
+            try self.init(ascii: Array<Byte>(string.utf8))
         }
 
         // MARK: - Format
@@ -105,7 +105,7 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
     /// let localPart = try RFC_5321.EmailAddress.LocalPart(ascii: "user".utf8)
     /// ```
     public init<Bytes: Collection>(ascii bytes: Bytes, in _: Void = ()) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard let firstByte = bytes.first else { throw Error.empty }
 
         var count = 0
@@ -114,7 +114,8 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
             count += 1
             lastByte = byte
             // Validate ASCII-only (high bit must be 0)
-            guard byte < 0x80 else {
+            // audit: underlying — pending byte-arithmetic decision (high-bit check)
+            guard byte.underlying < 0x80 else {
                 throw Error.nonASCII
             }
         }
@@ -126,8 +127,8 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
         let rawValue = String(decoding: bytes, as: UTF8.self)
 
         // Handle quoted string format
-        if firstByte == .ascii.quotationMark {
-            guard lastByte == .ascii.quotationMark else {
+        if firstByte == ASCII.Code.quotationMark {
+            guard lastByte == ASCII.Code.quotationMark else {
                 throw Error.invalidQuotedString(rawValue)
             }
 
@@ -136,24 +137,25 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
             var escaped = false
             for byte in bytes {
                 if !insideQuotes {
-                    if byte == .ascii.quotationMark {
+                    if byte == ASCII.Code.quotationMark {
                         insideQuotes = true
                     }
                 } else {
                     if escaped {
                         escaped = false
                         // After backslash, allow quote or backslash
-                        guard byte == .ascii.quotationMark || byte == .ascii.reverseSolidus else {
+                        guard byte == ASCII.Code.quotationMark || byte == ASCII.Code.reverseSolidus else {
                             throw Error.invalidQuotedString(rawValue)
                         }
-                    } else if byte == .ascii.reverseSolidus {
+                    } else if byte == ASCII.Code.reverseSolidus {
                         escaped = true
-                    } else if byte == .ascii.quotationMark {
+                    } else if byte == ASCII.Code.quotationMark {
                         // End of quoted string
                         break
                     } else {
                         // Inside quotes: allow printable ASCII except unescaped quote
-                        guard byte >= 0x20 && byte < 0x7F else {
+                        // audit: underlying — pending byte-arithmetic decision (range check)
+                        guard byte.underlying >= 0x20 && byte.underlying < 0x7F else {
                             throw Error.invalidCharacter(rawValue, byte: byte)
                         }
                     }
@@ -170,28 +172,29 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
             var index = bytes.startIndex
 
             for byte in bytes {
+                let code = ASCII.Code(byte)
                 let isAtext =
-                    byte.ascii.isLetter || byte.ascii.isDigit || byte == 0x21  // !
-                    || byte == 0x23  // #
-                    || byte == 0x24  // $
-                    || byte == 0x25  // %
-                    || byte == 0x26  // &
-                    || byte == 0x27  // '
-                    || byte == 0x2A  // *
-                    || byte == 0x2B  // +
-                    || byte == 0x2D  // -
-                    || byte == 0x2F  // /
-                    || byte == 0x3D  // =
-                    || byte == 0x3F  // ?
-                    || byte == 0x5E  // ^
-                    || byte == 0x5F  // _
-                    || byte == 0x60  // `
-                    || byte == 0x7B  // {
-                    || byte == 0x7C  // |
-                    || byte == 0x7D  // }
-                    || byte == 0x7E  // ~
+                    code.isLetter || code.isDigit || code == ASCII.Code.exclamationMark
+                    || code == ASCII.Code.numberSign
+                    || code == ASCII.Code.dollarSign
+                    || code == ASCII.Code.percentSign
+                    || code == ASCII.Code.ampersand
+                    || code == ASCII.Code.apostrophe
+                    || code == ASCII.Code.asterisk
+                    || code == ASCII.Code.plus
+                    || code == ASCII.Code.hyphen
+                    || code == ASCII.Code.solidus
+                    || code == ASCII.Code.equalsSign
+                    || code == ASCII.Code.questionMark
+                    || code == ASCII.Code.circumflex
+                    || code == ASCII.Code.underscore
+                    || code == ASCII.Code.graveAccent
+                    || code == ASCII.Code.leftCurlyBracket
+                    || code == ASCII.Code.verticalLine
+                    || code == ASCII.Code.rightCurlyBracket
+                    || code == ASCII.Code.tilde
 
-                let isDot = byte == .ascii.period
+                let isDot = byte == ASCII.Code.period
 
                 guard isAtext || isDot else {
                     throw Error.invalidCharacter(rawValue, byte: byte)
@@ -238,7 +241,7 @@ extension RFC_5321.EmailAddress.LocalPart {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii localPart: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: localPart._value)
     }
 }

@@ -105,12 +105,12 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
     /// let email = try RFC_5321.EmailAddress(ascii: "user@example.com".utf8)
     /// ```
     public init<Bytes: Collection>(ascii bytes: Bytes, in _: Void = ()) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
         // Check for angle bracket format: [display-name] <local@domain>
-        if let openAngle = bytes.firstIndex(where: { $0 == 0x3C }),  // <
-            let closeAngle = bytes.firstIndex(where: { $0 == 0x3E }) {  // >
+        if let openAngle = bytes.firstIndex(where: { $0 == ASCII.Code.lessThanSign }),
+            let closeAngle = bytes.firstIndex(where: { $0 == ASCII.Code.greaterThanSign }) {
 
             // Extract display name if present
             let displayName: String?
@@ -134,7 +134,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
             let emailBytes = bytes[bytes.index(after: openAngle)..<closeAngle]
 
             // Find @ sign
-            guard let atIndex = emailBytes.firstIndex(where: { $0 == .ascii.commercialAt }) else {
+            guard let atIndex = emailBytes.firstIndex(where: { $0 == ASCII.Code.commercialAt }) else {
                 throw Error.missingAtSign
             }
 
@@ -159,7 +159,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
             try self.init(displayName: displayName, localPart: localPart, domain: domain)
         } else {
             // Parse as bare email address: local@domain
-            guard let atIndex = bytes.firstIndex(where: { $0 == .ascii.commercialAt }) else {
+            guard let atIndex = bytes.firstIndex(where: { $0 == ASCII.Code.commercialAt }) else {
                 throw Error.missingAtSign
             }
 
@@ -202,38 +202,40 @@ extension RFC_5321.EmailAddress {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii email: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         if let displayName = email.displayName {
             // Check if display name needs quoting (RFC 5322 specials)
             let needsQuoting = displayName.utf8.contains { byte in
+                let code = ASCII.Code(Byte(byte))
                 // Quote if: not letter, not digit, not whitespace
-                !byte.ascii.isLetter && !byte.ascii.isDigit && !byte.ascii.isWhitespace
+                return !code.isLetter && !code.isDigit && !code.isWhitespace
             }
 
             if needsQuoting {
-                buffer.append(UInt8.ascii.quotationMark)
+                buffer.append(ASCII.Code.quotationMark)
                 for char in displayName.utf8 {
-                    if char == UInt8.ascii.quotationMark || char == UInt8.ascii.reverseSolidus {
-                        buffer.append(UInt8.ascii.reverseSolidus)
+                    let byte = Byte(char)
+                    if byte == ASCII.Code.quotationMark || byte == ASCII.Code.reverseSolidus {
+                        buffer.append(ASCII.Code.reverseSolidus)
                     }
-                    buffer.append(char)
+                    buffer.append(byte)
                 }
-                buffer.append(UInt8.ascii.quotationMark)
+                buffer.append(ASCII.Code.quotationMark)
             } else {
-                buffer.append(contentsOf: displayName.utf8)
+                buffer.append(contentsOf: Array<Byte>(displayName.utf8))
             }
 
-            buffer.append(UInt8.ascii.space)
-            buffer.append(UInt8.ascii.lessThanSign)
+            buffer.append(ASCII.Code.space)
+            buffer.append(ASCII.Code.lessThanSign)
         }
 
         // local-part@domain
         buffer.append(ascii: email.localPart)
-        buffer.append(UInt8.ascii.commercialAt)
+        buffer.append(ASCII.Code.commercialAt)
         buffer.append(ascii: email.domain)
 
         if email.displayName != nil {
-            buffer.append(UInt8.ascii.greaterThanSign)
+            buffer.append(ASCII.Code.greaterThanSign)
         }
     }
 }

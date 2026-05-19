@@ -33,7 +33,7 @@ extension RFC_5321.EmailAddress.LocalPart {
         case nonASCII
 
         /// Invalid character in local-part
-        case invalidCharacter(_ value: String, byte: UInt8)
+        case invalidCharacter(_ value: String, byte: Byte)
 
         /// Dot-atom format is invalid
         case invalidDotAtom(_ localPart: String)
