@@ -114,8 +114,7 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
             count += 1
             lastByte = byte
             // Validate ASCII-only (high bit must be 0)
-            // audit: underlying — pending byte-arithmetic decision (high-bit check)
-            guard byte.underlying < 0x80 else {
+            guard ASCII.Code(byte).isASCII else {
                 throw Error.nonASCII
             }
         }
@@ -153,9 +152,8 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
                         // End of quoted string
                         break
                     } else {
-                        // Inside quotes: allow printable ASCII except unescaped quote
-                        // audit: underlying — pending byte-arithmetic decision (range check)
-                        guard byte.underlying >= 0x20 && byte.underlying < 0x7F else {
+                        // Inside quotes: allow printable ASCII (0x20–0x7E)
+                        guard ASCII.Code(byte).isPrintable else {
                             throw Error.invalidCharacter(rawValue, byte: byte)
                         }
                     }
