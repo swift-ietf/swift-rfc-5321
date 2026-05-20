@@ -109,8 +109,8 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
         // Check for angle bracket format: [display-name] <local@domain>
-        if let openAngle = bytes.firstIndex(where: { $0 == ASCII.Code.lessThanSign }),
-            let closeAngle = bytes.firstIndex(where: { $0 == ASCII.Code.greaterThanSign }) {
+        if let openAngle = bytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.lessThanSign }),
+            let closeAngle = bytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.greaterThanSign }) {
 
             // Extract display name if present
             let displayName: String?
@@ -134,7 +134,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
             let emailBytes = bytes[bytes.index(after: openAngle)..<closeAngle]
 
             // Find @ sign
-            guard let atIndex = emailBytes.firstIndex(where: { $0 == ASCII.Code.commercialAt }) else {
+            guard let atIndex = emailBytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.commercialAt }) else {
                 throw Error.missingAtSign
             }
 
@@ -159,7 +159,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
             try self.init(displayName: displayName, localPart: localPart, domain: domain)
         } else {
             // Parse as bare email address: local@domain
-            guard let atIndex = bytes.firstIndex(where: { $0 == ASCII.Code.commercialAt }) else {
+            guard let atIndex = bytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.commercialAt }) else {
                 throw Error.missingAtSign
             }
 
@@ -215,7 +215,8 @@ extension RFC_5321.EmailAddress {
                 buffer.append(ASCII.Code.quotationMark)
                 for char in displayName.utf8 {
                     let byte = Byte(char)
-                    if byte == ASCII.Code.quotationMark || byte == ASCII.Code.reverseSolidus {
+                    let code = ASCII.Code(byte)
+                    if code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus {
                         buffer.append(ASCII.Code.reverseSolidus)
                     }
                     buffer.append(byte)
