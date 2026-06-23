@@ -109,8 +109,8 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
         // Check for angle bracket format: [display-name] <local@domain>
-        if let openAngle = bytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.lessThanSign }),
-            let closeAngle = bytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.greaterThanSign }) {
+        if let openAngle = bytes.firstIndex(of: ASCII.Code.lessThanSign.byte),
+            let closeAngle = bytes.firstIndex(of: ASCII.Code.greaterThanSign.byte) {
 
             // Extract display name if present
             let displayName: String?
@@ -134,7 +134,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
             let emailBytes = bytes[bytes.index(after: openAngle)..<closeAngle]
 
             // Find @ sign
-            guard let atIndex = emailBytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.commercialAt }) else {
+            guard let atIndex = emailBytes.firstIndex(of: ASCII.Code.commercialAt.byte) else {
                 throw Error.missingAtSign
             }
 
@@ -159,7 +159,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
             try self.init(displayName: displayName, localPart: localPart, domain: domain)
         } else {
             // Parse as bare email address: local@domain
-            guard let atIndex = bytes.firstIndex(where: { ASCII.Code($0) == ASCII.Code.commercialAt }) else {
+            guard let atIndex = bytes.firstIndex(of: ASCII.Code.commercialAt.byte) else {
                 throw Error.missingAtSign
             }
 
@@ -206,8 +206,8 @@ extension RFC_5321.EmailAddress {
         if let displayName = email.displayName {
             // Check if display name needs quoting (RFC 5322 specials)
             let needsQuoting = displayName.utf8.contains { byte in
-                let code = ASCII.Code(Byte(byte))
-                // Quote if: not letter, not digit, not whitespace
+                // Non-ASCII, or any non-alphanumeric/whitespace char, forces quoting.
+                guard let code = try? ASCII.Code(Byte(byte)) else { return true }
                 return !code.isLetter && !code.isDigit && !code.isWhitespace
             }
 
@@ -215,8 +215,7 @@ extension RFC_5321.EmailAddress {
                 buffer.append(ASCII.Code.quotationMark)
                 for char in displayName.utf8 {
                     let byte = Byte(char)
-                    let code = ASCII.Code(byte)
-                    if code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus {
+                    if byte == ASCII.Code.quotationMark.byte || byte == ASCII.Code.reverseSolidus.byte {
                         buffer.append(ASCII.Code.reverseSolidus)
                     }
                     buffer.append(byte)

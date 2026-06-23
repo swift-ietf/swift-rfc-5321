@@ -106,36 +106,32 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
     /// ```
     public init<Bytes: Collection>(ascii bytes: Bytes, in _: Void = ()) throws(Error)
     where Bytes.Element == Byte {
-        guard let firstByte = bytes.first else { throw Error.empty }
-
-        var count = 0
-        var lastByte = firstByte
-        for byte in bytes {
-            count += 1
-            lastByte = byte
-            // Validate ASCII-only (high bit must be 0)
-            guard ASCII.Code(byte).isASCII else {
-                throw Error.nonASCII
-            }
+        // Lift to the ASCII.Code domain once; the throwing lift IS the ASCII-only
+        // validation (an RFC 5321 local-part is an ASCII grammar).
+        let codes: [ASCII.Code]
+        do {
+            codes = try Array<ASCII.Code>(bytes)
+        } catch {
+            throw Error.nonASCII
         }
 
-        guard count <= Limits.maxLength else {
-            throw Error.tooLong(count)
+        guard let first = codes.first, let last = codes.last else { throw Error.empty }
+        guard codes.count <= Limits.maxLength else {
+            throw Error.tooLong(codes.count)
         }
 
-        let rawValue = String(decoding: bytes, as: UTF8.self)
+        let rawValue = String(decoding: codes, as: UTF8.self)
 
         // Handle quoted string format
-        if ASCII.Code(firstByte) == ASCII.Code.quotationMark {
-            guard ASCII.Code(lastByte) == ASCII.Code.quotationMark else {
+        if first == ASCII.Code.quotationMark {
+            guard last == ASCII.Code.quotationMark else {
                 throw Error.invalidQuotedString(rawValue)
             }
 
             // Validate quoted string content
             var insideQuotes = false
             var escaped = false
-            for byte in bytes {
-                let code = ASCII.Code(byte)
+            for code in codes {
                 if !insideQuotes {
                     if code == ASCII.Code.quotationMark {
                         insideQuotes = true
@@ -155,7 +151,7 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
                     } else {
                         // Inside quotes: allow printable ASCII (0x20–0x7E)
                         guard code.isPrintable else {
-                            throw Error.invalidCharacter(rawValue, byte: byte)
+                            throw Error.invalidCharacter(rawValue, byte: code.byte)
                         }
                     }
                 }
@@ -168,10 +164,8 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
         else {
             // atext = ALPHA / DIGIT / "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "/" / "=" / "?" / "^" / "_" / "`" / "{" / "|" / "}" / "~"
             var lastWasDot = false
-            var index = bytes.startIndex
 
-            for byte in bytes {
-                let code = ASCII.Code(byte)
+            for (offset, code) in codes.enumerated() {
                 let isAtext =
                     code.isLetter || code.isDigit || code == ASCII.Code.exclamationMark
                     || code == ASCII.Code.numberSign
@@ -196,12 +190,12 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
                 let isDot = code == ASCII.Code.period
 
                 guard isAtext || isDot else {
-                    throw Error.invalidCharacter(rawValue, byte: byte)
+                    throw Error.invalidCharacter(rawValue, byte: code.byte)
                 }
 
                 // Can't start or end with dot, can't have consecutive dots
                 if isDot {
-                    guard index != bytes.startIndex else {
+                    guard offset != 0 else {
                         throw Error.invalidDotAtom(rawValue)
                     }
                     guard !lastWasDot else {
@@ -210,7 +204,6 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
                 }
 
                 lastWasDot = isDot
-                index = bytes.index(after: index)
             }
 
             // Can't end with dot
