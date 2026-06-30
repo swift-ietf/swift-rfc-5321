@@ -5,7 +5,10 @@
 //  EmailAddress implementation
 //
 
-import ASCII_Serializer_Primitives
+public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 import INCITS_4_1986
 public import RFC_1123
 import Standard_Library_Extensions
@@ -76,9 +79,14 @@ extension RFC_5321 {
     }
 }
 
-// MARK: - Byte-Level Parsing (Binary.ASCII.Serializable)
+// MARK: - Byte-Level Parsing
 
-extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
+extension RFC_5321.EmailAddress: ASCII.Parseable {
+    /// Creates an email address by validating `string`'s UTF-8 bytes as ASCII.
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
+    }
+
     /// Initialize from ASCII bytes, validating RFC 5321 rules
     ///
     /// ## Category Theory
@@ -104,7 +112,7 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
     /// ```swift
     /// let email = try RFC_5321.EmailAddress(ascii: "user@example.com".utf8)
     /// ```
-    public init<Bytes: Collection>(ascii bytes: Bytes, in _: Void = ()) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
@@ -186,21 +194,30 @@ extension RFC_5321.EmailAddress: Binary.ASCII.Serializable {
     }
 }
 
-// MARK: - Protocol Conformances
-
-extension RFC_5321.EmailAddress: Binary.ASCII.RawRepresentable {
-    public typealias RawValue = String
-}
-
 // MARK: - ASCII Serialization
 
-extension RFC_5321.EmailAddress {
-    /// Serialize email address to ASCII bytes
-    ///
-    /// Required implementation for `Binary.ASCII.RawRepresentable` to avoid
-    /// infinite recursion (since `rawValue` is synthesized from serialization).
+extension RFC_5321.EmailAddress: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 5321 mailbox/address form.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { email, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(email, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable defaults.
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii email: Self,
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (RFC 5321 mailbox/address).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ email: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         if let displayName = email.displayName {
@@ -230,14 +247,26 @@ extension RFC_5321.EmailAddress {
         }
 
         // local-part@domain
-        buffer.append(ascii: email.localPart)
+        RFC_5321.EmailAddress.LocalPart.serialize(email.localPart, into: &buffer)
         buffer.append(ASCII.Code.commercialAt)
-        buffer.append(ascii: email.domain)
+        RFC_1123.Domain.serialize(email.domain, into: &buffer)
 
         if email.displayName != nil {
             buffer.append(ASCII.Code.greaterThanSign)
         }
     }
+}
+
+// MARK: - Protocol Conformances
+
+extension RFC_5321.EmailAddress: Swift.RawRepresentable {
+    /// The email address's ASCII serialization as a `String` (computed; the
+    /// rawValue is derived from serialization, not stored).
+    public var rawValue: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+
+    public init?(rawValue: String) { try? self.init(rawValue) }
 }
 
 // MARK: - Properties
@@ -258,4 +287,9 @@ extension RFC_5321.EmailAddress {
 }
 
 // MARK: - Protocol Conformances
-extension RFC_5321.EmailAddress: CustomStringConvertible {}
+extension RFC_5321.EmailAddress: CustomStringConvertible {
+    /// The email address's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}

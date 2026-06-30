@@ -5,7 +5,10 @@
 //  LocalPart implementation with canonical byte storage
 //
 
-import ASCII_Serializer_Primitives
+public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 import INCITS_4_1986
 import Standard_Library_Extensions
 
@@ -41,7 +44,7 @@ extension RFC_5321.EmailAddress {
 
         /// String representation derived from canonical bytes
         public var value: String {
-            String(ascii: self)
+            String(decoding: serialized, as: UTF8.self)
         }
 
         /// Creates local-part WITHOUT validation
@@ -76,9 +79,30 @@ extension RFC_5321.EmailAddress {
     }
 }
 
-// MARK: - Byte-Level Parsing (Binary.ASCII.Serializable)
+// MARK: - ASCII Serialization
 
-extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
+extension RFC_5321.EmailAddress.LocalPart: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer: appends the stored (already-validated ASCII)
+    /// bytes projected into the `ASCII.Code` substrate (lossless via `.byte`).
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { value, buffer in
+            buffer.append(contentsOf: value._value.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable defaults; bytes derive from `.serialized`.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+// MARK: - Byte-Level Parsing
+
+extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
     /// Initialize from ASCII bytes, validating RFC 5321 rules
     ///
     /// ## Category Theory
@@ -104,7 +128,7 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
     /// ```swift
     /// let localPart = try RFC_5321.EmailAddress.LocalPart(ascii: "user".utf8)
     /// ```
-    public init<Bytes: Collection>(ascii bytes: Bytes, in _: Void = ()) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Lift to the ASCII.Code domain once; the throwing lift IS the ASCII-only
         // validation (an RFC 5321 local-part is an ASCII grammar).
@@ -219,23 +243,10 @@ extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.Serializable {
 
 // MARK: - Protocol Conformances
 
-extension RFC_5321.EmailAddress.LocalPart: Binary.ASCII.RawRepresentable {
-    public typealias RawValue = String
-}
-
-// MARK: - ASCII Serialization
-
-extension RFC_5321.EmailAddress.LocalPart {
-    /// Serialize local-part to ASCII bytes
-    ///
-    /// Required implementation for `Binary.ASCII.RawRepresentable` to avoid
-    /// infinite recursion (since `rawValue` is synthesized from serialization).
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii localPart: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: localPart._value)
-    }
+extension RFC_5321.EmailAddress.LocalPart: Swift.RawRepresentable {
+    /// `rawValue` is the computed `String` getter defined on the type; the
+    /// failable init re-validates through the canonical string initializer.
+    public init?(rawValue: String) { try? self.init(rawValue) }
 }
 
 extension RFC_5321.EmailAddress.LocalPart: CustomStringConvertible {
