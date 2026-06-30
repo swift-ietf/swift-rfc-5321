@@ -8,7 +8,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 import INCITS_4_1986
 import Standard_Library_Extensions
 
@@ -82,14 +81,6 @@ extension RFC_5321.EmailAddress {
 // MARK: - ASCII Serialization
 
 extension RFC_5321.EmailAddress.LocalPart: ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer: appends the stored (already-validated ASCII)
-    /// bytes projected into the `ASCII.Code` substrate (lossless via `.byte`).
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { value, buffer in
-            buffer.append(contentsOf: value._value.map { ASCII.Code(unchecked: $0) })
-        }
-    }
-
     /// Serializes `value` as ASCII bytes into `buffer` (own `ASCII.Serializable` verb).
     ///
     /// The bytes are the UTF-8 of the `String` `rawValue` (the ASCII-only
