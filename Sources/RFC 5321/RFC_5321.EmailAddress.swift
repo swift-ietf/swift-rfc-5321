@@ -8,7 +8,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 import INCITS_4_1986
 public import RFC_1123
 import Standard_Library_Extensions
@@ -196,13 +195,47 @@ extension RFC_5321.EmailAddress: ASCII.Parseable {
 
 // MARK: - ASCII Serialization
 
-extension RFC_5321.EmailAddress: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 5321 mailbox/address form.
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { email, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(email, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+extension RFC_5321.EmailAddress: ASCII.Serializable, Binary.Serializable {
+    /// Own `ASCII.Serializable` verb ([FAM-012]) — the RFC 5321 mailbox/address
+    /// form, composing the already-re-cut `LocalPart` / `Domain` **ASCII** verbs
+    /// directly into the `ASCII.Code` buffer (evergreen same-format composition;
+    /// no byte-detour). The display-name leaf is emitted on the ASCII-code
+    /// substrate. Output is identical to the Binary witness body (`serializeBytes`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        if let displayName = value.displayName {
+            let needsQuoting = displayName.utf8.contains { byte in
+                guard let code = try? ASCII.Code(Byte(byte)) else { return true }
+                return !code.isLetter && !code.isDigit && !code.isWhitespace
+            }
+
+            if needsQuoting {
+                buffer.append(ASCII.Code.quotationMark)
+                for char in displayName.utf8 {
+                    let code = ASCII.Code(unchecked: Byte(char))
+                    if code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus {
+                        buffer.append(ASCII.Code.reverseSolidus)
+                    }
+                    buffer.append(code)
+                }
+                buffer.append(ASCII.Code.quotationMark)
+            } else {
+                buffer.append(contentsOf: displayName.utf8.map { ASCII.Code(unchecked: Byte($0)) })
+            }
+
+            buffer.append(ASCII.Code.space)
+            buffer.append(ASCII.Code.lessThanSign)
+        }
+
+        // local-part@domain — direct same-format composition of the re-cut verbs
+        RFC_5321.EmailAddress.LocalPart.serialize(value.localPart, into: &buffer)
+        buffer.append(ASCII.Code.commercialAt)
+        RFC_1123.Domain.serialize(value.domain, into: &buffer)
+
+        if value.displayName != nil {
+            buffer.append(ASCII.Code.greaterThanSign)
         }
     }
 
