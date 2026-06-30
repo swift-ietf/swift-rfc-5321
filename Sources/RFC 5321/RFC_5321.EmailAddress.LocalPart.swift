@@ -81,13 +81,25 @@ extension RFC_5321.EmailAddress {
 
 // MARK: - ASCII Serialization
 
-extension RFC_5321.EmailAddress.LocalPart: Serializable, ASCII.Serializable, Binary.Serializable {
+extension RFC_5321.EmailAddress.LocalPart: ASCII.Serializable, Binary.Serializable {
     /// Canonical ASCII serializer: appends the stored (already-validated ASCII)
     /// bytes projected into the `ASCII.Code` substrate (lossless via `.byte`).
     public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
         Serializer_Primitives.Serializer.Pure { value, buffer in
             buffer.append(contentsOf: value._value.map { ASCII.Code(unchecked: $0) })
         }
+    }
+
+    /// Serializes `value` as ASCII bytes into `buffer` (own `ASCII.Serializable` verb).
+    ///
+    /// The bytes are the UTF-8 of the `String` `rawValue` (the ASCII-only
+    /// `_value` store projected through `rawValue`), lifted into the
+    /// `ASCII.Code` substrate.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
     /// Explicit `Binary.Serializable` witness disambiguating the two
