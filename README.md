@@ -1,6 +1,6 @@
 # Swift RFC 5321
 
-[![CI](https://github.com/swift-standards/swift-rfc-5321/workflows/CI/badge.svg)](https://github.com/swift-standards/swift-rfc-5321/actions/workflows/ci.yml)
+[![CI](https://github.com/swift-ietf/swift-rfc-5321/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-5321/actions/workflows/ci.yml)
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
 
 Swift implementation of RFC 5321: Simple Mail Transfer Protocol (SMTP) - email address validation and formatting standard.
@@ -27,7 +27,7 @@ Add swift-rfc-5321 to your package dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-standards/swift-rfc-5321.git", from: "0.1.0")
+    .package(url: "https://github.com/swift-ietf/swift-rfc-5321.git", from: "0.3.4")
 ]
 ```
 
@@ -160,11 +160,11 @@ public enum Error: Swift.Error {
 ## Related Packages
 
 ### Dependencies
-- [swift-rfc-1123](https://github.com/swift-standards/swift-rfc-1123) - Domain name validation per RFC 1123
+- [swift-rfc-1123](https://github.com/swift-ietf/swift-rfc-1123) - Domain name validation per RFC 1123
 
 ### Used By
-- [swift-rfc-5322](https://github.com/swift-standards/swift-rfc-5322) - Extended email address format (Internet Message Format)
-- [swift-rfc-6531](https://github.com/swift-standards/swift-rfc-6531) - Internationalized email addresses (SMTPUTF8)
+- [swift-rfc-5322](https://github.com/swift-ietf/swift-rfc-5322) - Extended email address format (Internet Message Format)
+- [swift-rfc-6531](https://github.com/swift-ietf/swift-rfc-6531) - Internationalized email addresses (SMTPUTF8)
 
 ## Requirements
 
