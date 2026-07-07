@@ -7,8 +7,8 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
 import INCITS_4_1986
+public import Parseable_ASCII_Primitives
 import Standard_Library_Extensions
 
 extension RFC_5321.EmailAddress {
@@ -53,7 +53,7 @@ extension RFC_5321.EmailAddress {
         /// - Pre-validated values
         /// - Internal construction after validation
         init(__unchecked: Void, rawValue: String) {
-            self._value = Array<Byte>(rawValue.utf8)
+            self._value = [Byte](rawValue.utf8)
             // Infer format from presence of quotes
             if rawValue.hasPrefix("\"") && rawValue.hasSuffix("\"") {
                 self.format = .quoted
@@ -66,7 +66,7 @@ extension RFC_5321.EmailAddress {
         ///
         /// This is a convenience initializer that converts String to bytes.
         public init(_ string: some StringProtocol) throws(Error) {
-            try self.init(ascii: Array<Byte>(string.utf8))
+            try self.init(ascii: [Byte](string.utf8))
         }
 
         // MARK: - Format
@@ -137,7 +137,7 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
         // validation (an RFC 5321 local-part is an ASCII grammar).
         let codes: [ASCII.Code]
         do {
-            codes = try Array<ASCII.Code>(bytes)
+            codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII
         }
@@ -167,7 +167,8 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
                     if escaped {
                         escaped = false
                         // After backslash, allow quote or backslash
-                        guard code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus else {
+                        guard code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus
+                        else {
                             throw Error.invalidQuotedString(rawValue)
                         }
                     } else if code == ASCII.Code.reverseSolidus {

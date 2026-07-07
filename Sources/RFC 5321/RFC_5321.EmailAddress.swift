@@ -7,8 +7,8 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
 import INCITS_4_1986
+public import Parseable_ASCII_Primitives
 public import RFC_1123
 import Standard_Library_Extensions
 
@@ -117,7 +117,8 @@ extension RFC_5321.EmailAddress: ASCII.Parseable {
 
         // Check for angle bracket format: [display-name] <local@domain>
         if let openAngle = bytes.firstIndex(of: ASCII.Code.lessThanSign.byte),
-            let closeAngle = bytes.firstIndex(of: ASCII.Code.greaterThanSign.byte) {
+            let closeAngle = bytes.firstIndex(of: ASCII.Code.greaterThanSign.byte)
+        {
 
             // Extract display name if present
             let displayName: String?
@@ -265,14 +266,16 @@ extension RFC_5321.EmailAddress: ASCII.Serializable, Binary.Serializable {
                 buffer.append(ASCII.Code.quotationMark)
                 for char in displayName.utf8 {
                     let byte = Byte(char)
-                    if byte == ASCII.Code.quotationMark.byte || byte == ASCII.Code.reverseSolidus.byte {
+                    if byte == ASCII.Code.quotationMark.byte
+                        || byte == ASCII.Code.reverseSolidus.byte
+                    {
                         buffer.append(ASCII.Code.reverseSolidus)
                     }
                     buffer.append(byte)
                 }
                 buffer.append(ASCII.Code.quotationMark)
             } else {
-                buffer.append(contentsOf: Array<Byte>(displayName.utf8))
+                buffer.append(contentsOf: [Byte](displayName.utf8))
             }
 
             buffer.append(ASCII.Code.space)
