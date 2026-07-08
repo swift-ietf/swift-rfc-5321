@@ -149,18 +149,18 @@ extension RFC_5321.EmailAddress: ASCII.Parseable {
             // Extract local-part
             let localBytes = emailBytes[emailBytes.startIndex..<atIndex]
             let localPart: LocalPart
-            do {
+            do throws(LocalPart.Error) {
                 localPart = try LocalPart(ascii: localBytes)
-            } catch let error {
+            } catch {
                 throw Error.invalidLocalPart(error)
             }
 
             // Extract domain
             let domainBytes = emailBytes[emailBytes.index(after: atIndex)...]
             let domain: RFC_1123.Domain
-            do {
+            do throws(RFC_1123.Domain.Error) {
                 domain = try RFC_1123.Domain(ascii: domainBytes)
-            } catch let error {
+            } catch {
                 throw Error.invalidDomain(error)
             }
 
@@ -174,18 +174,18 @@ extension RFC_5321.EmailAddress: ASCII.Parseable {
             // Extract local-part
             let localBytes = bytes[bytes.startIndex..<atIndex]
             let localPart: LocalPart
-            do {
+            do throws(LocalPart.Error) {
                 localPart = try LocalPart(ascii: localBytes)
-            } catch let error {
+            } catch {
                 throw Error.invalidLocalPart(error)
             }
 
             // Extract domain
             let domainBytes = bytes[bytes.index(after: atIndex)...]
             let domain: RFC_1123.Domain
-            do {
+            do throws(RFC_1123.Domain.Error) {
                 domain = try RFC_1123.Domain(ascii: domainBytes)
-            } catch let error {
+            } catch {
                 throw Error.invalidDomain(error)
             }
 

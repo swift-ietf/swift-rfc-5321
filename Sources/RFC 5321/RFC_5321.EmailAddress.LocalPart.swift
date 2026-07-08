@@ -36,16 +36,6 @@ extension RFC_5321.EmailAddress {
         /// The storage format (dot-atom or quoted)
         private let format: Format
 
-        /// Raw string value
-        public var rawValue: String {
-            String(decoding: _value, as: UTF8.self)
-        }
-
-        /// String representation derived from canonical bytes
-        public var value: String {
-            String(decoding: serialized, as: UTF8.self)
-        }
-
         /// Creates local-part WITHOUT validation
         ///
         /// **Warning**: Bypasses RFC validation. Only use for:
@@ -68,13 +58,27 @@ extension RFC_5321.EmailAddress {
         public init(_ string: some StringProtocol) throws(Error) {
             try self.init(ascii: [Byte](string.utf8))
         }
+    }
+}
 
-        // MARK: - Format
+// MARK: - Accessors & Format (API-IMPL-008: extracted from type body)
 
-        private enum Format: Hashable, Codable {
-            case dotAtom  // Regular unquoted format
-            case quoted  // Quoted string format
-        }
+extension RFC_5321.EmailAddress.LocalPart {
+    /// Raw string value
+    public var rawValue: String {
+        String(decoding: _value, as: UTF8.self)
+    }
+
+    /// String representation derived from canonical bytes
+    public var value: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+
+    // MARK: - Format
+
+    private enum Format: Hashable, Codable {
+        case dotAtom  // Regular unquoted format
+        case quoted  // Quoted string format
     }
 }
 

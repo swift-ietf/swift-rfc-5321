@@ -111,7 +111,7 @@ extension RFC_5321.EmailAddress.Parse: Parser.`Protocol` {
     }
 
     @inlinable
-    static func _splitAtSign(
+    package static func _splitAtSign(
         _ slice: Input
     ) throws(Failure) -> (localPart: Input, domain: Input) {
         // Find last '@' (handles quoted local-parts containing '@')
