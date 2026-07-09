@@ -140,7 +140,7 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
         // Lift to the ASCII.Code domain once; the throwing lift IS the ASCII-only
         // validation (an RFC 5321 local-part is an ASCII grammar).
         let codes: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII
