@@ -39,6 +39,11 @@ extension RFC_5321.EmailAddress {
         /// Angle-bracket format (`[display-name] <local@domain>`) has an
         /// opening `<` with no `>` after it (fable-448 F-001).
         case unterminatedAngleBracket
+
+        /// Display name contains a byte outside the 7-bit ASCII range
+        /// (fable-448 F-004). RFC 5321 mailboxes are ASCII-only; a non-ASCII
+        /// display name must be RFC 2047-encoded upstream.
+        case invalidDisplayName(_ name: String, byte: Byte)
     }
 }
 
@@ -57,6 +62,9 @@ extension RFC_5321.EmailAddress.Error: CustomStringConvertible {
             return "Invalid domain: \(error)"
         case .unterminatedAngleBracket:
             return "Email address has an opening '<' with no matching '>'"
+        case .invalidDisplayName(let name, let byte):
+            return
+                "Display name '\(name)' contains non-ASCII byte 0x\(String(byte.underlying, radix: 16)) (RFC 5321 requires ASCII-only mailboxes; RFC 2047-encode non-ASCII names upstream)"
         }
     }
 }

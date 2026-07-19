@@ -65,7 +65,25 @@ extension RFC_5321 {
             localPart: LocalPart,
             domain: RFC_1123.Domain
         ) throws(Error) {
-            self.displayName = displayName?.trimming(.ascii.whitespaces)
+            let trimmedDisplayName = displayName?.trimming(.ascii.whitespaces)
+
+            // fable-448 F-004: RFC 5321 mailboxes are an ASCII grammar; a
+            // non-ASCII display name must be RFC 2047-encoded upstream
+            // before it reaches this initializer. Validating here is what
+            // makes the `ASCII.Code(unchecked:)` lifts in `serialize` below
+            // sound — they now only ever see bytes that passed this check
+            // (the internal `__unchecked` initializer remains a deliberate,
+            // documented escape hatch for pre-validated values and is out
+            // of scope for this check).
+            if let trimmedDisplayName {
+                for byte in trimmedDisplayName.utf8 {
+                    guard byte < 0x80 else {
+                        throw Error.invalidDisplayName(trimmedDisplayName, byte: Byte(byte))
+                    }
+                }
+            }
+
+            self.displayName = trimmedDisplayName
             self.localPart = localPart
             self.domain = domain
 
@@ -218,6 +236,11 @@ extension RFC_5321.EmailAddress: ASCII.Serializable, Binary.Serializable {
         into buffer: inout Buffer
     ) where Buffer.Element == ASCII.Code {
         if let displayName = value.displayName {
+            // fable-448 F-004: `ASCII.Code(unchecked:)` below is sound because
+            // `init(displayName:localPart:domain:)` now rejects any non-ASCII
+            // byte in `displayName` before a `Self` can exist with one — this
+            // block never sees a byte outside 0x00–0x7F for a publicly
+            // constructed value.
             let needsQuoting = displayName.utf8.contains { byte in
                 guard let code = try? ASCII.Code(Byte(byte)) else { return true }
                 return !code.isLetter && !code.isDigit && !code.isWhitespace
