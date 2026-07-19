@@ -116,9 +116,20 @@ extension RFC_5321.EmailAddress: ASCII.Parseable {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
         // Check for angle bracket format: [display-name] <local@domain>
-        if let openAngle = bytes.firstIndex(of: ASCII.Code.lessThanSign.byte),
-            let closeAngle = bytes.firstIndex(of: ASCII.Code.greaterThanSign.byte)
-        {
+        //
+        // fable-448 F-001: the closing '>' must be located strictly after the
+        // opening '<'. Scanning for '<' and '>' independently (the prior
+        // approach) traps whenever a '>' occurs earlier in `bytes` than the
+        // first '<' (e.g. "a>b<c@d.com") — the resulting `emailBytes` range
+        // below would have upperBound < lowerBound. This mirrors the scan
+        // order `RFC_5321.EmailAddress.Parse` already uses.
+        if let openAngle = bytes.firstIndex(of: ASCII.Code.lessThanSign.byte) {
+            guard
+                let closeAngle = bytes[bytes.index(after: openAngle)...]
+                    .firstIndex(of: ASCII.Code.greaterThanSign.byte)
+            else {
+                throw Error.unterminatedAngleBracket
+            }
 
             // Extract display name if present
             let displayName: String?

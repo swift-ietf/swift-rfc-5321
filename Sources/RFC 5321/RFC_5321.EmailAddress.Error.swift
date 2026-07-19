@@ -35,6 +35,10 @@ extension RFC_5321.EmailAddress {
 
         /// Domain validation failed
         case invalidDomain(_ error: RFC_1123.Domain.Error)
+
+        /// Angle-bracket format (`[display-name] <local@domain>`) has an
+        /// opening `<` with no `>` after it (fable-448 F-001).
+        case unterminatedAngleBracket
     }
 }
 
@@ -51,6 +55,8 @@ extension RFC_5321.EmailAddress.Error: CustomStringConvertible {
             return "Invalid local-part: \(error)"
         case .invalidDomain(let error):
             return "Invalid domain: \(error)"
+        case .unterminatedAngleBracket:
+            return "Email address has an opening '<' with no matching '>'"
         }
     }
 }
