@@ -254,7 +254,13 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
 extension RFC_5321.EmailAddress.LocalPart: Swift.RawRepresentable {
     /// `rawValue` is the computed `String` getter defined on the type; the
     /// failable init re-validates through the canonical string initializer.
-    public init?(rawValue: String) { try? self.init(rawValue) }
+    public init?(rawValue: String) {
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
+    }
 }
 
 extension RFC_5321.EmailAddress.LocalPart: CustomStringConvertible {

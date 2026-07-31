@@ -242,7 +242,12 @@ extension RFC_5321.EmailAddress: ASCII.Serializable, Binary.Serializable {
             // block never sees a byte outside 0x00–0x7F for a publicly
             // constructed value.
             let needsQuoting = displayName.utf8.contains { byte in
-                guard let code = try? ASCII.Code(Byte(byte)) else { return true }
+                let code: ASCII.Code
+                do throws(ASCII.Code.Error) {
+                    code = try ASCII.Code(Byte(byte))
+                } catch {
+                    return true
+                }
                 return !code.isLetter && !code.isDigit && !code.isWhitespace
             }
 
@@ -292,7 +297,12 @@ extension RFC_5321.EmailAddress: ASCII.Serializable, Binary.Serializable {
             // Check if display name needs quoting (RFC 5322 specials)
             let needsQuoting = displayName.utf8.contains { byte in
                 // Non-ASCII, or any non-alphanumeric/whitespace char, forces quoting.
-                guard let code = try? ASCII.Code(Byte(byte)) else { return true }
+                let code: ASCII.Code
+                do throws(ASCII.Code.Error) {
+                    code = try ASCII.Code(Byte(byte))
+                } catch {
+                    return true
+                }
                 return !code.isLetter && !code.isDigit && !code.isWhitespace
             }
 
@@ -336,7 +346,13 @@ extension RFC_5321.EmailAddress: Swift.RawRepresentable {
         String(decoding: serialized, as: UTF8.self)
     }
 
-    public init?(rawValue: String) { try? self.init(rawValue) }
+    public init?(rawValue: String) {
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
+    }
 }
 
 // MARK: - Properties
