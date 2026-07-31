@@ -32,7 +32,9 @@ extension RFC_5321.EmailAddress.`Angle Bracket Parsing`.`Edge Case` {
     }
 
     @Test
-    func `init(ascii:) throws instead of silently succeeding when an open angle has no close angle anywhere after it`() {
+    func
+        `init(ascii:) throws instead of silently succeeding when an open angle has no close angle anywhere after it`()
+    {
         // Pre-fix, when `bytes.firstIndex(of: '>')` is nil the compound
         // `if let` fails as a whole and parsing silently falls back to the
         // bare `local@domain` path over the ENTIRE input — including the

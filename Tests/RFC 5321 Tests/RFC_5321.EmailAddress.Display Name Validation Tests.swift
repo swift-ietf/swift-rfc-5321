@@ -21,7 +21,10 @@ extension RFC_5321.EmailAddress {
 
 extension RFC_5321.EmailAddress.`Display Name Validation`.`Edge Case` {
     @Test
-    func `init(displayName:localPart:domain:) throws instead of silently accepting a non-ASCII display name`() throws {
+    func
+        `init(displayName:localPart:domain:) throws instead of silently accepting a non-ASCII display name`()
+        throws
+    {
         // Pre-fix, the display name is never validated: this construction
         // silently succeeds, and the non-ASCII byte in "é" is later
         // force-lifted through `ASCII.Code(unchecked:)` during ASCII
@@ -39,7 +42,10 @@ extension RFC_5321.EmailAddress.`Display Name Validation`.`Edge Case` {
     }
 
     @Test
-    func `init(displayName:localPart:domain:) still accepts an ASCII-only display name after the fix`() throws {
+    func
+        `init(displayName:localPart:domain:) still accepts an ASCII-only display name after the fix`()
+        throws
+    {
         let localPart = try RFC_5321.EmailAddress.LocalPart("jose")
         let domain = try RFC_1123.Domain("example.com")
         let email = try RFC_5321.EmailAddress(
