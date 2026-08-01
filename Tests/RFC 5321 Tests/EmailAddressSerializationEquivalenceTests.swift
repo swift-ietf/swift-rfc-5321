@@ -15,7 +15,12 @@ import Testing
 
 @Suite
 struct `EmailAddress Serialization Equivalence` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
 
+extension `EmailAddress Serialization Equivalence`.Unit {
     @Test
     func `ASCII verb output equals Binary witness output for the quoting and escape path`() throws {
         // A display name containing a `"` forces BOTH the quoting wrapper and the

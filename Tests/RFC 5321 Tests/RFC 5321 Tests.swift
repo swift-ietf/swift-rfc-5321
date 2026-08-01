@@ -12,6 +12,12 @@ import Testing
 
 @Suite
 struct `RFC 5321 Domain Tests` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
+
+extension `RFC 5321 Domain Tests`.Unit {
     @Test
     func `Successfully creates standard domain`() throws {
         let domain = try RFC_1123.Domain("mail.example.com")

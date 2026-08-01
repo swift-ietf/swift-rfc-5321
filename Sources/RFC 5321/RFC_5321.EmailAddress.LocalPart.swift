@@ -73,13 +73,6 @@ extension RFC_5321.EmailAddress.LocalPart {
     public var value: String {
         String(decoding: serialized, as: UTF8.self)
     }
-
-    // MARK: - Format
-
-    private enum Format: Hashable, Codable {
-        case dotAtom  // Regular unquoted format
-        case quoted  // Quoted string format
-    }
 }
 
 // MARK: - ASCII Serialization
@@ -94,6 +87,10 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Serializable, Binary.Serializab
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == ASCII.Code {
+        // swift-linter:disable:next raw value access
+        // REASON: same-package extension implementing the type's own ASCII.Serializable boundary; `.rawValue` is the type's own canonical projection.
+        // swift-linter:disable:next chained rawvalue access
+        // REASON: same-package extension implementing the type's own ASCII.Serializable boundary; `.rawValue.utf8` is the type's own canonical projection, not an external escape.
         for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
@@ -135,7 +132,7 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
     /// ```swift
     /// let localPart = try RFC_5321.EmailAddress.LocalPart(ascii: "user".utf8)
     /// ```
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Lift to the ASCII.Code domain once; the throwing lift IS the ASCII-only
         // validation (an RFC 5321 local-part is an ASCII grammar).
@@ -269,12 +266,3 @@ extension RFC_5321.EmailAddress.LocalPart: CustomStringConvertible {
     }
 }
 
-// MARK: - Constants
-
-extension RFC_5321.EmailAddress.LocalPart {
-    package enum Limits {}
-}
-
-extension RFC_5321.EmailAddress.LocalPart.Limits {
-    static let maxLength = 64  // Max length for local-part per RFC 5321
-}

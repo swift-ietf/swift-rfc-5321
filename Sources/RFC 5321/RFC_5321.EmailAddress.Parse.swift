@@ -24,30 +24,12 @@ extension RFC_5321.EmailAddress {
 }
 
 extension RFC_5321.EmailAddress.Parse {
-    public struct Output: Sendable {
-        public let displayName: Input?
-        public let localPart: Input
-        public let domain: Input
-
-        @inlinable
-        public init(displayName: Input?, localPart: Input, domain: Input) {
-            self.displayName = displayName
-            self.localPart = localPart
-            self.domain = domain
-        }
-    }
-
-    public enum Error: Swift.Error, Sendable, Equatable {
-        case empty
-        case missingAtSign
-        case emptyLocalPart
-        case emptyDomain
-        case unterminatedAngleBracket
-    }
+    public typealias Error = __RFC_5321_EmailAddress_Parse_Error
 }
 
 extension RFC_5321.EmailAddress.Parse: Parser.`Protocol` {
-    public typealias Failure = RFC_5321.EmailAddress.Parse<Input>.Error
+    public typealias Failure = __RFC_5321_EmailAddress_Parse_Error
+    public typealias Body = Never
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {

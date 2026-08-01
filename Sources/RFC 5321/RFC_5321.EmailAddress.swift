@@ -129,7 +129,7 @@ extension RFC_5321.EmailAddress: ASCII.Parseable {
     /// ```swift
     /// let email = try RFC_5321.EmailAddress(ascii: "user@example.com".utf8)
     /// ```
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
@@ -362,16 +362,6 @@ extension RFC_5321.EmailAddress {
     public var address: String {
         "\(localPart)@\(domain.name)"
     }
-}
-
-// MARK: - Constants
-
-extension RFC_5321.EmailAddress {
-    package enum Limits {}
-}
-
-extension RFC_5321.EmailAddress.Limits {
-    static let maxTotalLength = 254  // Maximum total email address length
 }
 
 // MARK: - Protocol Conformances

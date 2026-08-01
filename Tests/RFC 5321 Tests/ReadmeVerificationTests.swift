@@ -8,36 +8,39 @@
 import RFC_5321
 import Testing
 
-typealias EmailAddress = RFC_5321.EmailAddress
-
 @Suite
 struct `README Verification` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
 
+extension `README Verification`.Unit {
     @Test
     func `README Line 52-55: Parse simple email address`() throws {
-        let email = try EmailAddress("user@example.com")
+        let email = try RFC_5321.EmailAddress("user@example.com")
         #expect(email.localPart.description == "user")
         #expect(email.domain.name == "example.com")
     }
 
     @Test
     func `README Line 57-60: Parse with display name`() throws {
-        let namedEmail = try EmailAddress("John Doe <john@example.com>")
+        let namedEmail = try RFC_5321.EmailAddress("John Doe <john@example.com>")
         #expect(namedEmail.displayName == "John Doe")
         #expect(namedEmail.address == "john@example.com")
     }
 
     @Test
     func `README Line 62-64: Parse with quoted display name`() throws {
-        let quotedEmail = try EmailAddress("\"Doe, John\" <john@example.com>")
+        let quotedEmail = try RFC_5321.EmailAddress("\"Doe, John\" <john@example.com>")
         #expect(quotedEmail.displayName == "Doe, John")
     }
 
     @Test
     func `README Line 70-80: Create from components`() throws {
-        let localPart = try EmailAddress.LocalPart("support")
+        let localPart = try RFC_5321.EmailAddress.LocalPart("support")
         let domain = try RFC_1123.Domain("example.com")
-        let email = try EmailAddress(
+        let email = try RFC_5321.EmailAddress(
             displayName: "Support Team",
             localPart: localPart,
             domain: domain
@@ -49,9 +52,9 @@ struct `README Verification` {
 
     @Test
     func `README Line 86-89: Valid addresses`() throws {
-        let valid1 = try EmailAddress("simple@example.com")
-        let valid2 = try EmailAddress("user.name@example.com")
-        let valid3 = try EmailAddress("\"user name\"@example.com")
+        let valid1 = try RFC_5321.EmailAddress("simple@example.com")
+        let valid2 = try RFC_5321.EmailAddress("user.name@example.com")
+        let valid3 = try RFC_5321.EmailAddress("\"user name\"@example.com")
 
         #expect(valid1.localPart.description == "simple")
         #expect(valid2.localPart.description == "user.name")
