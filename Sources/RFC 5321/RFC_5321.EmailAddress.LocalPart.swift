@@ -265,4 +265,3 @@ extension RFC_5321.EmailAddress.LocalPart: CustomStringConvertible {
         String(decoding: _value, as: UTF8.self)
     }
 }
-
