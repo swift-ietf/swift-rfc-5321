@@ -1,10 +1,3 @@
-//
-//  ReadmeVerificationTests.swift
-//  swift-rfc-5321
-//
-//  Verifies that README code examples actually work
-//
-
 import RFC_5321
 import Testing
 
