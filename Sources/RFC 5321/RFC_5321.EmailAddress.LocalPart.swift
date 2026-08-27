@@ -1,7 +1,7 @@
-public import ASCII_Serializer_Primitives
-public import Binary_Serializable_Primitives
+public import ASCII_Serializer
+public import Binary_Serializable
 import INCITS_4_1986
-public import Parseable_ASCII_Primitives
+public import Parseable_ASCII
 import Standard_Library_Extensions
 
 extension RFC_5321.EmailAddress {
