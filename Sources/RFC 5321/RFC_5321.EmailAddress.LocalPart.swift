@@ -1,70 +1,34 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-import INCITS_4_1986
-public import Parseable_ASCII
-import Standard_Library_Extensions
+import ASCII
+public import Byte
+import Byte
 
 extension RFC_5321.EmailAddress {
 
-    public struct LocalPart: Hashable, Sendable, Codable {
+    public struct LocalPart: Hashable, Sendable {
 
-        let _value: [Byte]
+        package let bytes: [Byte]
 
-        private let format: Format
-
-        init(__unchecked: Void, rawValue: String) {
-            self._value = [Byte](rawValue.utf8)
-
-            if rawValue.hasPrefix("\"") && rawValue.hasSuffix("\"") {
-                self.format = .quoted
-            } else {
-                self.format = .dotAtom
-            }
-        }
-
-        public init(_ string: some StringProtocol) throws(Error) {
-            try self.init(ascii: [Byte](string.utf8))
-        }
+        package let format: Format
     }
 }
 
 extension RFC_5321.EmailAddress.LocalPart {
 
-    public var rawValue: String {
-        String(decoding: _value, as: UTF8.self)
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
-
-    public var value: String {
-        String(decoding: serialized, as: UTF8.self)
-    }
-}
-
-extension RFC_5321.EmailAddress.LocalPart: ASCII.Serializable, Binary.Serializable {
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-
-        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: value.serialized)
-    }
-}
-
-extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
 
         let codes: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            codes = try [ASCII.Code](bytes)
+            var built: [ASCII.Code] = []
+            built.reserveCapacity(bytes.count)
+            for byte in bytes {
+                built.append(try ASCII.Code(byte))
+            }
+            codes = built
         } catch {
             throw Error.nonASCII
         }
@@ -74,47 +38,40 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
             throw Error.tooLong(codes.count)
         }
 
-        let rawValue = String(decoding: codes, as: UTF8.self)
+        let rawValue = String(decoding: codes.lazy.map(\.underlying), as: UTF8.self)
 
         if first == ASCII.Code.quotationMark {
-            guard last == ASCII.Code.quotationMark else {
+            guard last == ASCII.Code.quotationMark, codes.count >= 2 else {
                 throw Error.invalidQuotedString(rawValue)
             }
 
-            var insideQuotes = false
             var escaped = false
-            for code in codes {
-                if !insideQuotes {
-                    if code == ASCII.Code.quotationMark {
-                        insideQuotes = true
+            for code in codes[1..<(codes.count - 1)] {
+                if escaped {
+                    escaped = false
+
+                    guard code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus
+                    else {
+                        throw Error.invalidQuotedString(rawValue)
                     }
+                } else if code == ASCII.Code.reverseSolidus {
+                    escaped = true
+                } else if code == ASCII.Code.quotationMark {
+                    throw Error.invalidQuotedString(rawValue)
                 } else {
-                    if escaped {
-                        escaped = false
-
-                        guard code == ASCII.Code.quotationMark || code == ASCII.Code.reverseSolidus
-                        else {
-                            throw Error.invalidQuotedString(rawValue)
-                        }
-                    } else if code == ASCII.Code.reverseSolidus {
-                        escaped = true
-                    } else if code == ASCII.Code.quotationMark {
-
-                        break
-                    } else {
-
-                        guard code.isPrintable else {
-                            throw Error.invalidCharacter(rawValue, byte: code.byte)
-                        }
+                    guard code.isPrintable else {
+                        throw Error.invalidCharacter(rawValue, byte: code.byte)
                     }
                 }
             }
 
-            self._value = Array(bytes)
-            self.format = .quoted
-        }
+            guard !escaped else {
+                throw Error.invalidQuotedString(rawValue)
+            }
 
-        else {
+            self.bytes = [Byte](bytes)
+            self.format = .quoted
+        } else {
 
             var lastWasDot = false
 
@@ -162,25 +119,15 @@ extension RFC_5321.EmailAddress.LocalPart: ASCII.Parseable {
                 throw Error.invalidDotAtom(rawValue)
             }
 
-            self._value = Array(bytes)
+            self.bytes = [Byte](bytes)
             self.format = .dotAtom
         }
     }
 }
 
-extension RFC_5321.EmailAddress.LocalPart: Swift.RawRepresentable {
-
-    public init?(rawValue: String) {
-        do throws(Error) {
-            try self.init(rawValue)
-        } catch {
-            return nil
-        }
-    }
-}
-
 extension RFC_5321.EmailAddress.LocalPart: CustomStringConvertible {
+
     public var description: String {
-        String(decoding: _value, as: UTF8.self)
+        String(decoding: bytes, as: UTF8.self)
     }
 }

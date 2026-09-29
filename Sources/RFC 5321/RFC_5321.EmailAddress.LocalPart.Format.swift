@@ -1,5 +1,6 @@
 extension RFC_5321.EmailAddress.LocalPart {
-    enum Format: Hashable, Codable {
+
+    package enum Format: Hashable, Sendable {
         case dotAtom
         case quoted
     }

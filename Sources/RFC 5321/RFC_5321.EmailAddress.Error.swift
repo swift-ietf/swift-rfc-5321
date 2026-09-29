@@ -1,5 +1,5 @@
+public import Byte
 public import RFC_1123
-import Standard_Library_Extensions
 
 extension RFC_5321.EmailAddress {
 
@@ -39,7 +39,7 @@ extension RFC_5321.EmailAddress.Error: CustomStringConvertible {
 
         case .invalidDisplayName(let name, let byte):
             return
-                "Display name '\(name)' contains non-ASCII byte 0x\(String(byte.underlying, radix: 16)) (RFC 5321 requires ASCII-only mailboxes; RFC 2047-encode non-ASCII names upstream)"
+                "Display name '\(name)' contains non-ASCII byte 0x\(String(byte.bitPattern, radix: 16)) (RFC 5321 requires ASCII-only mailboxes; RFC 2047-encode non-ASCII names upstream)"
         }
     }
 }

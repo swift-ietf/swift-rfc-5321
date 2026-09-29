@@ -1,4 +1,4 @@
-import Standard_Library_Extensions
+public import Byte
 
 extension RFC_5321.EmailAddress.LocalPart {
 
@@ -31,7 +31,7 @@ extension RFC_5321.EmailAddress.LocalPart.Error: CustomStringConvertible {
             return "Local-part must contain only ASCII characters (RFC 5321)"
 
         case .invalidCharacter(let value, let byte):
-            return "Invalid byte 0x\(String(byte, radix: 16)) in local-part '\(value)'"
+            return "Invalid byte 0x\(String(byte.bitPattern, radix: 16)) in local-part '\(value)'"
 
         case .invalidDotAtom(let localPart):
             return "Invalid dot-atom format in local-part '\(localPart)'"
