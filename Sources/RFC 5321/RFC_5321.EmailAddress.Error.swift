@@ -3,7 +3,7 @@ public import RFC_1123
 
 extension RFC_5321.EmailAddress {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case missingAtSign
 

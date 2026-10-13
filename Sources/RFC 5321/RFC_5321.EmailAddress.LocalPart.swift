@@ -1,6 +1,5 @@
 import ASCII
 public import Byte
-import Byte
 
 extension RFC_5321.EmailAddress {
 
@@ -18,7 +17,7 @@ extension RFC_5321.EmailAddress.LocalPart {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
 
         let codes: [ASCII.Code]

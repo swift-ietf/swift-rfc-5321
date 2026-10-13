@@ -1,6 +1,5 @@
 import ASCII
 public import Byte
-import Byte
 import INCITS_4_1986
 public import RFC_1123
 import Standard_Library_Extensions
@@ -51,7 +50,7 @@ extension RFC_5321.EmailAddress {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else { throw Error.missingAtSign }
 
@@ -104,7 +103,7 @@ extension RFC_5321.EmailAddress {
         }
     }
 
-    private static func validatedLocalPart<Bytes: Swift.Collection>(
+    private static func validatedLocalPart<Bytes: Swift::Collection>(
         _ bytes: Bytes
     ) throws(Error) -> LocalPart where Bytes.Element == Byte {
         do throws(LocalPart.Error) {
@@ -114,7 +113,7 @@ extension RFC_5321.EmailAddress {
         }
     }
 
-    private static func validatedDomain<Bytes: Swift.Collection>(
+    private static func validatedDomain<Bytes: Swift::Collection>(
         _ bytes: Bytes
     ) throws(Error) -> RFC_1123.Domain where Bytes.Element == Byte {
         do throws(RFC_1123.Domain.Error) {
@@ -155,7 +154,7 @@ extension RFC_5321.EmailAddress: CustomStringConvertible {
     }
 }
 
-extension RFC_5321.EmailAddress: Swift.RawRepresentable {
+extension RFC_5321.EmailAddress: Swift::RawRepresentable {
 
     public var rawValue: String {
         description
