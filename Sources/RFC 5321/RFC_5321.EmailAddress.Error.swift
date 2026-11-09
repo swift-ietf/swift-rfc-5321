@@ -15,6 +15,8 @@ extension RFC_5321.EmailAddress {
 
         case unterminatedAngleBracket
 
+        case trailingText
+
         case invalidDisplayName(_ name: String, byte: Byte)
     }
 }
@@ -36,6 +38,9 @@ extension RFC_5321.EmailAddress.Error: CustomStringConvertible {
 
         case .unterminatedAngleBracket:
             return "Email address has an opening '<' with no matching '>'"
+
+        case .trailingText:
+            return "Email address has text after its closing '>'"
 
         case .invalidDisplayName(let name, let byte):
             return

@@ -56,10 +56,20 @@ extension RFC_5321.EmailAddress {
 
         if let openAngle = bytes.firstIndex(of: ASCII.Code.lessThanSign.byte) {
             guard
-                let closeAngle = bytes[bytes.index(after: openAngle)...]
-                    .firstIndex(of: ASCII.Code.greaterThanSign.byte)
+                let closeAngle = Self.lastIndex(
+                    of: ASCII.Code.greaterThanSign.byte,
+                    in: bytes[bytes.index(after: openAngle)...]
+                )
             else {
                 throw Error.unterminatedAngleBracket
+            }
+
+            guard
+                bytes[bytes.index(after: closeAngle)...].allSatisfy({ byte in
+                    byte == ASCII.Code.space.byte || byte == ASCII.Code.htab.byte
+                })
+            else {
+                throw Error.trailingText
             }
 
             let displayName: String?
@@ -82,7 +92,7 @@ extension RFC_5321.EmailAddress {
 
             let emailBytes = bytes[bytes.index(after: openAngle)..<closeAngle]
 
-            guard let atIndex = emailBytes.firstIndex(of: ASCII.Code.commercialAt.byte) else {
+            guard let atIndex = Self.lastIndex(of: ASCII.Code.commercialAt.byte, in: emailBytes) else {
                 throw Error.missingAtSign
             }
 
@@ -92,7 +102,7 @@ extension RFC_5321.EmailAddress {
             try self.init(displayName: displayName, localPart: localPart, domain: domain)
         } else {
 
-            guard let atIndex = bytes.firstIndex(of: ASCII.Code.commercialAt.byte) else {
+            guard let atIndex = Self.lastIndex(of: ASCII.Code.commercialAt.byte, in: bytes) else {
                 throw Error.missingAtSign
             }
 
@@ -101,6 +111,21 @@ extension RFC_5321.EmailAddress {
 
             try self.init(displayName: nil, localPart: localPart, domain: domain)
         }
+    }
+
+    private static func lastIndex<Bytes: Swift::Collection>(
+        of target: Byte,
+        in bytes: Bytes
+    ) -> Bytes.Index? where Bytes.Element == Byte {
+        var found: Bytes.Index?
+        var index = bytes.startIndex
+        while index != bytes.endIndex {
+            if bytes[index] == target {
+                found = index
+            }
+            index = bytes.index(after: index)
+        }
+        return found
     }
 
     private static func validatedLocalPart<Bytes: Swift::Collection>(

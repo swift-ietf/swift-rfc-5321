@@ -112,6 +112,44 @@ struct `RFC_5321.EmailAddress Tests` {
     }
 
     @Test
+    func `a quoted local part containing an at sign is read`() throws {
+        let email = try RFC_5321.EmailAddress("\"a@b\"@example.com")
+
+        #expect(email.localPart.description == "\"a@b\"")
+        #expect(email.domain.name == "example.com")
+    }
+
+    @Test
+    func `a quoted local part containing an at sign is read inside angle brackets`() throws {
+        let email = try RFC_5321.EmailAddress("John <\"a@b\"@example.com>")
+
+        #expect(email.displayName == "John")
+        #expect(email.localPart.description == "\"a@b\"")
+        #expect(email.domain.name == "example.com")
+    }
+
+    @Test
+    func `text after the closing angle bracket is refused`() throws {
+        #expect(throws: RFC_5321.EmailAddress.Error.trailingText) {
+            try RFC_5321.EmailAddress("John <john@example.com> trailing")
+        }
+    }
+
+    @Test
+    func `whitespace after the closing angle bracket is accepted`() throws {
+        let email = try RFC_5321.EmailAddress("John <john@example.com>  ")
+
+        #expect(email.address == "john@example.com")
+    }
+
+    @Test
+    func `an address literal domain is refused`() throws {
+        #expect(throws: RFC_5321.EmailAddress.Error.self) {
+            try RFC_5321.EmailAddress("user@[192.0.2.1]")
+        }
+    }
+
+    @Test
     func `an email address longer than the SMTP limit is refused`() throws {
         let local = String(repeating: "a", count: 64)
         let domain = String(repeating: "b", count: 60)
