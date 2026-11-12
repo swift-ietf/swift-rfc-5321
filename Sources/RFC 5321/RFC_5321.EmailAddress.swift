@@ -81,8 +81,7 @@ extension RFC_5321.EmailAddress {
 
                 if name.hasPrefix("\"") && name.hasSuffix("\"") {
                     let withoutQuotes = String(name.dropFirst().dropLast())
-                    name = withoutQuotes.replacing("\\\"", with: "\"")
-                        .replacing("\\\\", with: "\\")
+                    name = Self.unescapedFromQuotedString(withoutQuotes)
                 }
 
                 displayName = name.isEmpty ? nil : name
@@ -173,9 +172,28 @@ extension RFC_5321.EmailAddress: CustomStringConvertible {
     }
 
     private static func escapedForQuotedString(_ displayName: String) -> String {
-        displayName
-            .replacing("\\", with: "\\\\")
-            .replacing("\"", with: "\\\"")
+        var escaped = ""
+        for character in displayName {
+            if character == "\\" || character == "\"" {
+                escaped.append("\\")
+            }
+            escaped.append(character)
+        }
+        return escaped
+    }
+
+    private static func unescapedFromQuotedString(_ content: String) -> String {
+        var unescaped = ""
+        var pending = false
+        for character in content {
+            if !pending && character == "\\" {
+                pending = true
+                continue
+            }
+            unescaped.append(character)
+            pending = false
+        }
+        return unescaped
     }
 }
 
