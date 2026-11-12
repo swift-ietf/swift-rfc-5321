@@ -37,7 +37,7 @@ extension RFC_5321.EmailAddress.LocalPart {
             throw Error.tooLong(codes.count)
         }
 
-        let rawValue = String(decoding: codes.lazy.map(\.underlying), as: UTF8.self)
+        let rawValue = String(decoding: codes.lazy.map({ $0.underlying }), as: UTF8.self)
 
         if first == ASCII.Code.quotationMark {
             guard last == ASCII.Code.quotationMark, codes.count >= 2 else {
